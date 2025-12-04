@@ -15,31 +15,8 @@ The solution includes:
 
 #  Project Structure
 
-ML_Coursework/
-│
-├── notebooks/
-│ ├── data_exploration.ipynb
-│ ├── data_preprocessing.ipynb
-│ └── evaluation.ipynb
-  └── model_training.ipynb
-│
-├── streamlit_app/
-│ ├── app.py
-│ └── pages/
-│ ├── EDA.py
-│ ├── Preprocessing.py
-│ ├── Train_Model.py
-│ └── Evaluation.py
-│
-├── data/
-│ ├── raw/
-│ └── processed/
-│
-├── models/ # ignored by Git
-│
-├── requirements.txt
-├── .gitignore
-└── README.md
+<img width="484" height="880" alt="image" src="https://github.com/user-attachments/assets/14e3fbdd-f453-41c8-be69-e2b9ab8be2bf" />
+
 
 
 
