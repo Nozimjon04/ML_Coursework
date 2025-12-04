@@ -2,81 +2,121 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import joblib
 import os
 
+st.set_page_config(page_title="Train Model", layout="wide")
 st.title("Train Machine Learning Model")
 
-# Check if data exists from preprocessing
+# Load preprocessed data
 if "cleaned_df" not in st.session_state:
     st.warning("Please complete preprocessing first!")
     st.stop()
 
 df = st.session_state["cleaned_df"]
+st.write("### Cleaned Dataset")
+st.dataframe(df.head())
 
-st.subheader("Cleaned Dataset Ready for Training")
-st.write(df.head())
+# Target column selection
+st.subheader("Select Target Variable (What you want to predict)")
+target_column = st.selectbox("Choose the target column:", df.columns)
 
-# Select Target Column 
-st.subheader("Select Target Column (Prediction Column)")
-target_column = st.selectbox("Choose the target variable:", df.columns)
+if not target_column:
+    st.stop()
 
-if target_column:
-    st.info(f"Your model will predict: **{target_column}**")
+X = df.drop(columns=[target_column])
+y = df[target_column]
 
-    # Prepare Data
-    X = df.drop(columns=[target_column])
-    y = df[target_column]
+# Train-test split
+test_size = st.slider("Test Size (%)", 10, 50, 20) / 100
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=test_size, random_state=42
+)
 
-    # Train/Test Split
-    test_size = st.slider("Test Size (%)", 10, 50, 20) / 100
+st.write("Training samples:", X_train.shape)
+st.write("Testing samples:", X_test.shape)
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, random_state=42
+# Model selection
+st.subheader("Choose Machine Learning Model")
+
+model_name = st.selectbox(
+    "Select Model:",
+    ["Linear Regression", "Random Forest", "XGBoost"]
+)
+
+params = {}
+st.write("---")
+
+# Hyperparameters for each model
+if model_name == "Linear Regression":
+    st.info("Linear Regression has no major hyperparameters.")
+    model = LinearRegression()
+
+elif model_name == "Random Forest":
+    st.subheader("Random Forest Hyperparameters")
+
+    n_estimators = st.slider("Number of Trees", 50, 500, 150)
+    max_depth = st.slider("Max Depth", 3, 30, 12)
+    min_samples_split = st.slider("Min Samples Split", 2, 20, 5)
+
+    model = RandomForestRegressor(
+        n_estimators=n_estimators,
+        max_depth=max_depth,
+        min_samples_split=min_samples_split,
+        random_state=42,
+        n_jobs=-1
     )
 
-    st.write("Training samples:", X_train.shape)
-    st.write("Testing samples:", X_test.shape)
+elif model_name == "XGBoost":
+    st.subheader("XGBoost Hyperparameters")
 
-    # Train button
-    if st.button("Train Model"):
-        with st.spinner("Training model... Please wait"):
-            rf = RandomForestRegressor(
-                n_estimators=80,
-                max_depth=15,
-                min_samples_split=5,
-                random_state=42,
-                n_jobs=-1
-            )
+    n_estimators = st.slider("Number of Trees", 50, 500, 200)
+    learning_rate = st.slider("Learning Rate", 0.01, 0.5, 0.1)
+    max_depth = st.slider("Max Depth", 3, 20, 6)
 
-            rf.fit(X_train, y_train)
-            y_pred = rf.predict(X_test)
+    model = XGBRegressor(
+        n_estimators=n_estimators,
+        learning_rate=learning_rate,
+        max_depth=max_depth,
+        subsample=0.9,
+        colsample_bytree=0.9,
+        random_state=42
+    )
 
-        # Save predictions for evaluation page
-        st.session_state["y_test"] = y_test
-        st.session_state["y_pred"] = y_pred
-        st.session_state["model"] = rf
+st.write("---")
 
-        # Compute metrics
-        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-        mae = mean_absolute_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
+# Train model button
+if st.button("Train Model"):
+    with st.spinner("Training the model..."):
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
 
-        st.success("Model trained successfully!")
+    # Save values for Evaluation page
+    st.session_state["model"] = model
+    st.session_state["y_test"] = y_test
+    st.session_state["y_pred"] = y_pred
+    st.session_state["X_columns"] = list(X.columns)
 
-        st.subheader("Model Performance Metrics")
-        st.write(f"**RMSE:** {rmse:,.2f}")
-        st.write(f"**MAE:** {mae:,.2f}")
-        st.write(f"**R² Score:** {r2:.4f}")
+    # Metrics
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    mae = mean_absolute_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
 
-        # --- Save Model ---
-        model_path = "../models/best_model.pkl"
+    st.success("Model trained successfully!")
 
-        os.makedirs("../models", exist_ok=True)
-        joblib.dump(rf, model_path)
+    st.subheader("Model Performance Metrics")
+    st.write(f"**RMSE:** {rmse:,.3f}")
+    st.write(f"**MAE:** {mae:,.3f}")
+    st.write(f"**R² Score:** {r2:.4f}")
 
-        st.success(f"Model saved to `{model_path}`")
+    # Save model file
+    os.makedirs("../models", exist_ok=True)
+    model_path = f"../models/{model_name.replace(' ', '_').lower()}_model.pkl"
+    joblib.dump(model, model_path)
 
-        st.info("➡ Now go to **Evaluation** page to visualize results!")
+    st.success(f"Model saved at `{model_path}`")
+    st.info("➡ Go to **Evaluation** page next!")
