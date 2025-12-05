@@ -146,6 +146,18 @@ The application is deployed at:
 Start the app locally:
 
 ```bash
+# Crete Virtual Environment
+python -m venv venv
+
+#Activate the environment 
+venv\Scripts\activate (windows)
+
+source venv/bin/activate (macOS / Linux)
+
+# Install required libs
+pip install -r requirements.txt
+
+#Run the Streamlit Application
 streamlit run streamlit_app/app.py
 
 
