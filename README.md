@@ -139,7 +139,9 @@ File:
 
 The application is deployed at:
 
-👉 **LIVE APP:** *https://mlcoursework-hycmb7wemglsee9hqeaj9h.streamlit.app/*  
+**LIVE APP:** *https://mlcoursework-hycmb7wemglsee9hqeaj9h.streamlit.app/*  
+
+**Github link** : https://github.com/Nozimjon04/ML_Coursework
 
 Start the app locally:
 
@@ -147,6 +149,7 @@ Start the app locally:
 streamlit run streamlit_app/app.py
 
 
-Github link : https://github.com/Nozimjon04/ML_Coursework
+
+
 
 
