@@ -147,5 +147,6 @@ Start the app locally:
 streamlit run streamlit_app/app.py
 
 
+Github link : https://github.com/Nozimjon04/ML_Coursework
 
 
